@@ -1,0 +1,83 @@
+---
+title: "Fish Analysis"
+author: "Diana Young"
+date: "2/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r load_libraries, echo = FALSE, include = FALSE}
+library(car)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+```
+
+
+``` {r import_data, include = FALSE, collapse = TRUE}
+FISH <- read.csv("Fish.csv", stringsAsFactors = TRUE)
+count <- nrow(FISH)
+```
+The purpose of this study is to develop an algorithm to predict the weight of a fish based on its species, height, length, and width.  We use the Fish.csv dataset from the U. S. Bureau of Wildlife and Fisheries, which includes the weight, height, length, and width of fish  representing seven species. The dataset contained `r count` observations.  Table 1 shows the number of observations for each species.  
+
+``` {r specieis_counts, include = TRUE, echo = TRUE}
+species_count <- data.frame(table(FISH$Species))
+species_count <- rename(species_count, Species = Var1, Number = Freq)
+
+species_count %>%
+  kbl(caption = "Table1: Number of Observations by Species") %>%
+  kable_classic_2(full_width = F, position = "left") %>%
+  column_spec(1, width = "20em")
+```
+
+We began our analysis by first exploring the columns in the data set to familiarize ourselves with the data, determine if cleaning was required, and to see if any variable transformations would be required prior to modeling the data.  
+
+
+
+### Data Exploration and Cleaning
+
+For each numeric variable, we assessed its measures of central tendency and distribution shape.  We also, scanned the data to identify values that may require removal or imputation.  
+
+#### Weight Variable
+``` {r central_tendency, include = TRUE, echo= TRUE}
+num <- length(FISH$Weight[FISH$Weight == 0])
+min <- round(min(FISH$Weight),2)
+max <- round(max(FISH$Weight),2)
+mean <- round(mean(FISH$Weight),2)
+stdev <- round(sd(FISH$Weight),2)
+roach <- FISH[FISH$Species == "Roach",]
+mean_roach <- mean(roach$Weight)
+FISH[FISH$Species == "Roach","Weight"] <- mean_roach
+```
+The mean weight for the sample was `r mean` grams, the min was `r min`, the max was `r max`, and the standard deviaiton was `r stdev`.  The data set contained `r num` record(s) of fish weight 0 amount. A fishing weighing `r min` grams is not reasonable. However, all other fields of the row containing the 0 weight value contained reasonable values.  Accordingly, we imputed the mean weight of fish of the same specifies as a replacement for the 0 weight value.  
+
+Next, we reviewed the distribution of the weight observations and found that the sample was heavily skewed right.   The majority of the observations weighed under 500 grams, but several weighed beyond that up to 1650 grams.    
+
+``` {r weight_density_plot, include = TRUE, collapse=TRUE, fig.cap = "Figure1: Weight Density Plot"}
+ggplot(FISH, aes(x=Weight)) + geom_density()
+
+
+```
+
+
+
+
+Accordingly, we tried several transformation of the weight variable to see if anyone transformation resulted in a more normally distributed set of data.  The square root transformation resulted in a distribution that closer to normally distributed.  
+
+
+
+``` {r trans_weight_density_plot, include = TRUE, collapse=TRUE}
+FISH$WEIGHTSQRT <- sqrt(FISH$Weight)
+ggplot(FISH, aes(x=WEIGHTSQRT)) + geom_density()
+
+
+```
+
+Finally, we created a boxplot of the transformed variables to see if any extreme outliers existed.  
+
