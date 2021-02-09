@@ -79,5 +79,4 @@ ggplot(FISH, aes(x=WEIGHTSQRT)) + geom_density()
 
 ```
 
-Finally, we created a boxplot of the transformed variables to see if any extreme outliers existed.  
 
